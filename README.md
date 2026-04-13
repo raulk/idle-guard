@@ -7,6 +7,20 @@ Kinda sad we need this, but we do. Desperate times call for desperate measures.
 
 ---
 
+## Quickstart
+
+```sh
+❯ /plugin marketplace add raulk/idle-guard
+❯ /plugin install idle-guard@idle-guard
+❯ /reload-plugins
+
+# Optionally, run the following to wire up a statusline warning.
+# This will respect existing statusline scripts, and will integrate with them.
+❯ /idle-guard:setup
+```
+
+---
+
 ## How it works
 
 The Anthropic prompt cache has a 5-minute TTL. If you leave a conversation
@@ -23,18 +37,6 @@ Press up-arrow to resend within the next 5m, or start a new conversation.
 ```
 
 You can always smile, open up your (token) wallet, and press up-arrow to forcibly resend your message.
-
-## Installation
-
-```sh
-❯ /plugin marketplace add raulk/idle-guard
-❯ /plugin install idle-guard@idle-guard
-❯ /reload-plugins
-
-# Optionally, run the following to wire up a statusline warning.
-# This will respect existing statusline scripts, and will integrate with them.
-❯ /idle-guard:setup
-```
 
 ## Customize
 
