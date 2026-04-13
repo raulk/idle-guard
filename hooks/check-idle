@@ -80,7 +80,7 @@ else
     TOKEN_MSG=""
 fi
 
-REASON="Session idle for ${IDLE_STR} (limit: ${TIMEOUT_MINUTES}m). The prompt cache has expired.${TOKEN_MSG} Press up-arrow to send anyway, or start a new conversation."
+REASON="Session idle for ${IDLE_STR} (limit: ${TIMEOUT_MINUTES}m). The prompt cache has expired.${TOKEN_MSG} Press up-arrow to resend within the next ${TIMEOUT_MINUTES}m, or start a new conversation."
 
 # Record when the warning was shown so the next submission (the resend) passes through.
 TMP=$(mktemp)
