@@ -3,6 +3,8 @@
 A Claude Code plugin that blocks resuming conversations whose prompt cache has expired, **preventing surprise cache-resurrection costs**.
 Kinda sad we need this, but we do.
 
+<img width="2502" height="1634" alt="577543731-35cfc7b4-27fd-42a4-a1b4-1b3822bf266a optimized" src="https://github.com/user-attachments/assets/573a9dcc-6dd5-4230-8686-75ed2768ee80" />
+
 ## How it works
 
 The Anthropic prompt cache has a 5-minute TTL. If you leave a conversation
