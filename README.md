@@ -22,35 +22,23 @@ Press up-arrow to resend your message. You have one cache TTL window (default 5m
 
 ## Installation
 
-**Step 1.** Register the marketplace and enable the plugin in
-`~/.claude/settings.json`:
+Add the marketplace to Claude Code:
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "idle-guard": {
-      "source": {
-        "source": "github",
-        "repo": "raulk/idle-guard"
-      }
-    }
-  },
-  "enabledPlugins": {
-    "idle-guard@idle-guard": true
-  }
-}
+```
+/plugin marketplace add raulk/idle-guard
 ```
 
-**Step 2.** Run the setup skill in any Claude Code session to wire up the
-status bar:
+Install the plugin:
+
+```
+/plugin install idle-guard@idle-guard
+```
+
+Wire up the status bar:
 
 ```
 /idle-guard:setup
 ```
-
-That's it. The plugin starts blocking expired-cache resumes immediately.
-The setup skill configures the status bar indicator alongside any existing
-statusLine plugin you already have.
 
 ## Configuration
 
