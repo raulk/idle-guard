@@ -62,9 +62,15 @@ You are configuring the idle-guard plugin's status bar integration.
    ```json
    {
      "type": "command",
-     "command": "bash -c 'INPUT=$(cat); TRANSCRIPT=$(printf \"%s\" \"$INPUT\" | jq -r \".transcript_path // empty\"); /real/path/to/idle-guard/hooks/status \"$TRANSCRIPT\" | jq -r \".label // empty\" | grep -v \"^$\"; true'"
+     "command": "bash -c 'INPUT=$(cat); TRANSCRIPT=$(printf \"%s\" \"$INPUT\" | jq -r \".transcript_path // empty\"); /real/path/to/idle-guard/hooks/status \"$TRANSCRIPT\" | jq -r \".label // empty\" | grep -v \"^$\"; true'",
+     "refreshInterval": 10
    }
    ```
+
+   In both cases (A and B), set `"refreshInterval": 10` on the statusLine object.
+   idle-guard tracks elapsed idle time, so the status bar must refresh on a
+   timer to show the warning as soon as the cache expires — not only when Claude
+   responds to a message.
 
 4. Write the updated `settings.json` back.
 
