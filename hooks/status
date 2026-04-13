@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Status bar label script for idle-guard.
 # Usage: status <transcript_path>
-# Output: {"label":"..."} — empty label when session is fresh.
+# Output: {"label":"..."}, empty string when the session is fresh.
 set -euo pipefail
 
 _finish() { printf '{"label":""}\n'; exit 0; }
