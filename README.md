@@ -28,7 +28,10 @@ You can always smile, open up your (token) wallet, and press up-arrow to forcibl
 ❯ /plugin marketplace add raulk/idle-guard
 ❯ /plugin install idle-guard@idle-guard
 ❯ /reload-plugins
-❯ /idle-guard:setup     # this will wire in a status
+
+# Optionally, run the following to wire up a statusline warning.
+# This will respect existing statusline scripts, and will integrate with them.
+❯ /idle-guard:setup
 ```
 
 ## Customize
