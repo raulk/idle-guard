@@ -68,6 +68,9 @@ fi
 
 REASON="Session idle for ${IDLE_STR} (limit: ${TIMEOUT_MINUTES}m). The prompt cache has expired.${TOKEN_MSG} Press up-arrow to send anyway, or start a new conversation."
 
+# Reset the timestamp to now so the user's immediate resend passes through.
+printf '{"ts":%s}\n' "$NOW" > "$STATE_FILE"
+
 # Remove the approve trap; we are blocking.
 trap - EXIT
 printf '{"decision":"block","reason":%s}\n' "$(printf '%s' "$REASON" | jq -Rs .)"
