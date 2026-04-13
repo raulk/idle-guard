@@ -41,8 +41,22 @@ TIMEOUT_MS=$(( TIMEOUT_MINUTES * 60 * 1000 ))
 
 TS=$(jq -r '.ts' "$STATE_FILE")
 TOKENS=$(jq -r '.tokens // empty' "$STATE_FILE")
+WARNED_AT=$(jq -r '.warned_at // empty' "$STATE_FILE")
 
 NOW=$(( $(date +%s) * 1000 ))
+
+# If we recently showed a warning, this is the user's deliberate resend — allow
+# it and clear the flag. If they idled again past the threshold after the
+# warning, fall through to the normal check below.
+if [ -n "$WARNED_AT" ]; then
+    WARN_AGE_MS=$(( NOW - WARNED_AT ))
+    if [ "$WARN_AGE_MS" -lt "$TIMEOUT_MS" ]; then
+        TMP=$(mktemp)
+        jq 'del(.warned_at)' "$STATE_FILE" > "$TMP" && mv "$TMP" "$STATE_FILE"
+        exit 0
+    fi
+fi
+
 IDLE_MS=$(( NOW - TS ))
 
 if [ "$IDLE_MS" -le "$TIMEOUT_MS" ]; then
@@ -68,8 +82,9 @@ fi
 
 REASON="Session idle for ${IDLE_STR} (limit: ${TIMEOUT_MINUTES}m). The prompt cache has expired.${TOKEN_MSG} Press up-arrow to send anyway, or start a new conversation."
 
-# Reset the timestamp to now so the user's immediate resend passes through.
-printf '{"ts":%s}\n' "$NOW" > "$STATE_FILE"
+# Record when the warning was shown so the next submission (the resend) passes through.
+TMP=$(mktemp)
+jq --argjson warned_at "$NOW" '. + {warned_at: $warned_at}' "$STATE_FILE" > "$TMP" && mv "$TMP" "$STATE_FILE"
 
 # Remove the approve trap; we are blocking.
 trap - EXIT
