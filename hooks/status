@@ -51,7 +51,7 @@ fi
 
 if [ "$IDLE_MS" -gt "$TIMEOUT_MS" ]; then
     IDLE_MIN=$(( IDLE_MS / 1000 / 60 ))
-    LABEL="⚠ cache expired (${IDLE_MIN}m ago)${TOKEN_PART} to rewrite"
+    LABEL=$'\e[1;93m'"⚠ cache expired (${IDLE_MIN}m ago)${TOKEN_PART} to rewrite"$'\e[0m'
 elif [ "$IDLE_MS" -gt "$WARN_MS" ]; then
     REMAINING_S=$(( (TIMEOUT_MS - IDLE_MS) / 1000 ))
     LABEL="⏰ ${REMAINING_S}s left${TOKEN_PART} at risk"

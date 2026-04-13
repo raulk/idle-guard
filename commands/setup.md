@@ -1,6 +1,6 @@
 ---
 description: Wire idle-guard status indicator into your Claude Code status bar
-allowed-tools: Read, Write
+allowed-tools: Read, Write, Bash, Glob, Grep
 ---
 
 You are configuring the idle-guard plugin's status bar integration.
@@ -21,40 +21,52 @@ You are configuring the idle-guard plugin's status bar integration.
 
 3. Inspect `settings.statusLine.command` (the field may be absent):
 
-   **Case A — claude-hud present** (command contains `claude-hud`):
+   **Case A — an existing statusLine command is present**:
 
-   Wrap the existing command so it:
-   - Reads stdin once into a variable: `INPUT=$(cat)`
-   - Extracts transcript_path: `TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty')`
-   - Pipes original stdin to the existing claude-hud command AND appends
-     `--extra-cmd "$STATUS_SCRIPT \"$TRANSCRIPT\""` to the claude-hud
-     invocation.
+   Investigate what it does before touching it:
 
-   The new command must be a single bash -c '...' string. Write the actual
+   a. Read the command string and identify any plugin or binary being invoked
+      (e.g. a bun/node script, a shell script, a compiled binary).
+
+   b. If it invokes a plugin, locate the plugin's installed source and read its
+      code to understand how it works — specifically whether it provides a
+      documented and **actually implemented** integration point for appending
+      extra output (e.g. a CLI flag, a config field, a hook). Do not trust
+      documentation or flag names alone; verify the integration point is wired
+      up in the code that runs. Dead flags and unimplemented features are common.
+
+   c. If a working integration point exists, use it. If none exists, use the
+      universal fallback: run `$STATUS_SCRIPT` as a separate command after the
+      existing command and append its label as a plain output line.
+
+   In either case, the final command must:
+   - Read stdin once into a variable (`INPUT=$(cat)`) and pass it to any
+     command that needs it, since stdin can only be consumed once.
+   - Extract transcript_path:
+     `TRANSCRIPT=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty')`
+   - End with `; true` so the command always exits 0. A non-zero exit code
+     causes Claude Code to hide the entire status bar silently.
+
+   The universal fallback structure (fill in real paths):
+   ```
+   bash -c 'INPUT=$(cat); TRANSCRIPT=$(printf "%s" "$INPUT" | jq -r ".transcript_path // empty"); printf "%s" "$INPUT" | <existing-command>; "$STATUS_SCRIPT" "$TRANSCRIPT" | jq -r ".label // empty" | grep -v "^$"; true'
+   ```
+
+   The new command must be a single `bash -c '...'` string. Write the actual
    resolved path to `$STATUS_SCRIPT`, not a shell variable reference, since
    `settings.json` does not expand environment variables.
 
-   Example of the wrapped command structure (fill in real paths):
-   ```
-   bash -c 'INPUT=$(cat); TRANSCRIPT=$(printf "%s" "$INPUT" | jq -r ".transcript_path // empty"); printf "%s" "$INPUT" | bun "/real/path/to/claude-hud/src/index.ts" --extra-cmd "/real/path/to/idle-guard/hooks/status \"$TRANSCRIPT\""'
-   ```
-
-   **Case B — other custom statusLine present**:
-
-   Read the existing command, determine its output format, and append the
-   idle-guard label as an additional line or segment in a way that is
-   consistent with the existing output. Preserve all existing output.
-
-   **Case C — no statusLine**:
+   **Case B — no statusLine present**:
 
    Set a minimal statusLine that runs only the `status` script:
    ```json
    {
      "type": "command",
-     "command": "bash -c '/real/path/to/idle-guard/hooks/status \"$(cat | jq -r .transcript_path)\"'"
+     "command": "bash -c 'INPUT=$(cat); TRANSCRIPT=$(printf \"%s\" \"$INPUT\" | jq -r \".transcript_path // empty\"); /real/path/to/idle-guard/hooks/status \"$TRANSCRIPT\" | jq -r \".label // empty\" | grep -v \"^$\"; true'"
    }
    ```
 
 4. Write the updated `settings.json` back.
 
-5. Report exactly what you changed.
+5. Report exactly what you changed and, if you investigated a plugin, what you
+   found about its integration surface.
