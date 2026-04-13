@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Status bar label script for idle-guard.
+# Usage: status <transcript_path>
+# Output: {"label":"..."} — empty label when session is fresh.
+set -euo pipefail
+
+_finish() { printf '{"label":""}\n'; exit 0; }
+trap _finish EXIT
+
+TRANSCRIPT_PATH="${1:-}"
+
+if [ -z "$TRANSCRIPT_PATH" ]; then
+    exit 0
+fi
+
+KEY=$(printf '%s' "$TRANSCRIPT_PATH" | shasum 2>/dev/null | cut -d' ' -f1 \
+    || printf '%s' "$TRANSCRIPT_PATH" | sha1sum | cut -d' ' -f1)
+
+DATA_DIR="$HOME/.claude/plugins/data/idle-guard"
+STATE_FILE="$DATA_DIR/sessions/$KEY.json"
+
+if [ ! -f "$STATE_FILE" ]; then
+    exit 0
+fi
+
+TIMEOUT_MINUTES=5
+CONFIG_FILE="$DATA_DIR/config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    TIMEOUT_MINUTES=$(jq -r '(.timeout_minutes // 5) | floor' "$CONFIG_FILE")
+fi
+
+TIMEOUT_MS=$(( TIMEOUT_MINUTES * 60 * 1000 ))
+WARN_MS=$(( TIMEOUT_MS * 80 / 100 ))
+
+TS=$(jq -r '.ts' "$STATE_FILE")
+TOKENS=$(jq -r '.tokens // empty' "$STATE_FILE")
+
+NOW=$(( $(date +%s) * 1000 ))
+IDLE_MS=$(( NOW - TS ))
+
+# Build optional token suffix.
+TOKEN_PART=""
+if [ -n "$TOKENS" ] && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+    if [ "$TOKENS" -ge 1000 ]; then
+        TOKENS_K=$(( TOKENS / 1000 ))
+        TOKEN_PART=", ${TOKENS_K}k tokens"
+    else
+        TOKEN_PART=", ${TOKENS} tokens"
+    fi
+fi
+
+if [ "$IDLE_MS" -gt "$TIMEOUT_MS" ]; then
+    IDLE_MIN=$(( IDLE_MS / 1000 / 60 ))
+    LABEL="⚠ cache expired (${IDLE_MIN}m ago)${TOKEN_PART} to rewrite"
+elif [ "$IDLE_MS" -gt "$WARN_MS" ]; then
+    REMAINING_S=$(( (TIMEOUT_MS - IDLE_MS) / 1000 ))
+    LABEL="⏰ ${REMAINING_S}s left${TOKEN_PART} at risk"
+else
+    exit 0
+fi
+
+trap - EXIT
+printf '{"label":%s}\n' "$(printf '%s' "$LABEL" | jq -Rs .)"
