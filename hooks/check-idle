@@ -2,7 +2,7 @@
 # UserPromptSubmit hook: block message if session idle > timeout.
 set -euo pipefail
 
-_finish() { printf '{"decision": "approve"}\n'; }
+_finish() { printf '{"decision": "approve"}\n'; exit 0; }
 trap _finish EXIT
 
 INPUT=$(cat)
@@ -36,7 +36,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     printf '{"timeout_minutes":5}\n' > "$CONFIG_FILE"
 fi
 
-TIMEOUT_MINUTES=$(jq -r '.timeout_minutes // 5' "$CONFIG_FILE")
+TIMEOUT_MINUTES=$(jq -r '(.timeout_minutes // 5) | floor' "$CONFIG_FILE")
 TIMEOUT_MS=$(( TIMEOUT_MINUTES * 60 * 1000 ))
 
 TS=$(jq -r '.ts' "$STATE_FILE")
@@ -56,8 +56,12 @@ IDLE_SEC=$(( IDLE_SECONDS % 60 ))
 IDLE_STR="${IDLE_MIN}m ${IDLE_SEC}s"
 
 if [ -n "$TOKENS" ] && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
-    TOKENS_K=$(( TOKENS / 1000 ))
-    TOKEN_MSG=" Resuming will trigger cache rewrites for ~${TOKENS_K}k tokens."
+    if [ "$TOKENS" -ge 1000 ]; then
+        TOKENS_K=$(( TOKENS / 1000 ))
+        TOKEN_MSG=" Resuming will trigger cache rewrites for ~${TOKENS_K}k tokens."
+    else
+        TOKEN_MSG=" Resuming will trigger cache rewrites for ~${TOKENS} tokens."
+    fi
 else
     TOKEN_MSG=""
 fi
