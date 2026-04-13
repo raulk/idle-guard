@@ -1,0 +1,7 @@
+{
+  "name": "idle-guard",
+  "version": "1.0.0",
+  "description": "Blocks resuming Claude Code conversations whose prompt cache has expired",
+  "keywords": ["claude-code", "plugin"],
+  "license": "MIT"
+}
