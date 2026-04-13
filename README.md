@@ -32,7 +32,7 @@ Add to `~/.claude/settings.json`:
     "idle-guard": {
       "source": {
         "source": "github",
-        "repo": "YOUR_GITHUB_USERNAME/idle-guard"
+        "repo": "raulk/idle-guard"
       }
     }
   },

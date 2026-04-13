@@ -1,0 +1,19 @@
+{
+  "name": "idle-guard",
+  "owner": {
+    "name": "Raúl Kripalani"
+  },
+  "metadata": {
+    "description": "Blocks resuming Claude Code conversations whose prompt cache has expired",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "idle-guard",
+      "source": "./",
+      "description": "Blocks the user from resuming a conversation after the Anthropic prompt cache TTL (5 minutes) has expired, preventing expensive cache-resurrection writes.",
+      "category": "productivity",
+      "tags": ["idle", "cache", "prompt-cache", "guard", "cost"]
+    }
+  ]
+}

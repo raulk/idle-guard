@@ -1,0 +1,13 @@
+{
+  "name": "idle-guard",
+  "description": "Blocks resuming Claude Code conversations whose prompt cache has expired",
+  "version": "1.0.0",
+  "author": {
+    "name": "Raúl Kripalani",
+    "url": "https://github.com/raulk"
+  },
+  "homepage": "https://github.com/raulk/idle-guard",
+  "repository": "https://github.com/raulk/idle-guard",
+  "license": "MIT",
+  "keywords": ["idle", "cache", "prompt-cache", "guard", "claude-code"]
+}
