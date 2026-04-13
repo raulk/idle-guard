@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# UserPromptSubmit hook: block message if session idle > timeout.
+set -euo pipefail
+
+_finish() { printf '{"decision": "approve"}\n'; }
+trap _finish EXIT
+
+INPUT=$(cat)
+
+TRANSCRIPT_PATH=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty')
+SESSION_ID=$(printf '%s' "$INPUT" | jq -r '.session_id // empty')
+
+if [ -n "$TRANSCRIPT_PATH" ]; then
+    RAW_KEY="$TRANSCRIPT_PATH"
+elif [ -n "$SESSION_ID" ]; then
+    RAW_KEY="$SESSION_ID"
+else
+    exit 0
+fi
+
+KEY=$(printf '%s' "$RAW_KEY" | shasum 2>/dev/null | cut -d' ' -f1 \
+    || printf '%s' "$RAW_KEY" | sha1sum | cut -d' ' -f1)
+
+DATA_DIR="$HOME/.claude/plugins/data/idle-guard"
+STATE_FILE="$DATA_DIR/sessions/$KEY.json"
+
+# No state yet: first message in this session, pass through.
+if [ ! -f "$STATE_FILE" ]; then
+    exit 0
+fi
+
+# Load config; create default if absent.
+CONFIG_FILE="$DATA_DIR/config.json"
+if [ ! -f "$CONFIG_FILE" ]; then
+    mkdir -p "$DATA_DIR"
+    printf '{"timeout_minutes":5}\n' > "$CONFIG_FILE"
+fi
+
+TIMEOUT_MINUTES=$(jq -r '.timeout_minutes // 5' "$CONFIG_FILE")
+TIMEOUT_MS=$(( TIMEOUT_MINUTES * 60 * 1000 ))
+
+TS=$(jq -r '.ts' "$STATE_FILE")
+TOKENS=$(jq -r '.tokens // empty' "$STATE_FILE")
+
+NOW=$(( $(date +%s) * 1000 ))
+IDLE_MS=$(( NOW - TS ))
+
+if [ "$IDLE_MS" -le "$TIMEOUT_MS" ]; then
+    exit 0
+fi
+
+# Format idle duration as "Xm Ys".
+IDLE_SECONDS=$(( IDLE_MS / 1000 ))
+IDLE_MIN=$(( IDLE_SECONDS / 60 ))
+IDLE_SEC=$(( IDLE_SECONDS % 60 ))
+IDLE_STR="${IDLE_MIN}m ${IDLE_SEC}s"
+
+if [ -n "$TOKENS" ] && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+    TOKENS_K=$(( TOKENS / 1000 ))
+    TOKEN_MSG=" Resuming will trigger cache rewrites for ~${TOKENS_K}k tokens."
+else
+    TOKEN_MSG=""
+fi
+
+REASON="Session idle for ${IDLE_STR} (limit: ${TIMEOUT_MINUTES}m). The prompt cache has expired.${TOKEN_MSG} Press up-arrow to send anyway, or start a new conversation."
+
+# Remove the approve trap; we are blocking.
+trap - EXIT
+printf '{"decision":"block","reason":%s}\n' "$(printf '%s' "$REASON" | jq -Rs .)"
