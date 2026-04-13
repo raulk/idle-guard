@@ -22,9 +22,8 @@ Press up-arrow to resend your message. You have one cache TTL window (default 5m
 
 ## Installation
 
-### From GitHub
-
-Add to `~/.claude/settings.json`:
+**Step 1.** Register the marketplace and enable the plugin in
+`~/.claude/settings.json`:
 
 ```json
 {
@@ -42,8 +41,16 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-Then run `/idle-guard:setup` in any Claude Code session to configure the
-status bar integration.
+**Step 2.** Run the setup skill in any Claude Code session to wire up the
+status bar:
+
+```
+/idle-guard:setup
+```
+
+That's it. The plugin starts blocking expired-cache resumes immediately.
+The setup skill configures the status bar indicator alongside any existing
+statusLine plugin you already have.
 
 ## Configuration
 
