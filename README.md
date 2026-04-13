@@ -61,9 +61,14 @@ After running `/idle-guard:setup`, your status bar will show:
 
 | State | Label |
 |-------|-------|
-| Fresh (< 4m idle) | *(nothing)* |
-| Approaching expiry (4-5m) | `⏰ 30s left, 45k tokens at risk` |
-| Expired (> 5m) | `⚠ cache expired (3m ago), 45k tokens to rewrite` |
+| Fresh (< 80% of timeout) | *(nothing)* |
+| Approaching expiry (≥ 80%) | `⏰ 30s left, 45k tokens at risk` |
+| Expired | **`⚠ cache expired (3m ago), 45k tokens to rewrite`** (bold yellow) |
+
+The setup skill works with any existing statusLine configuration. It reads
+your current statusLine plugin's source to find a working integration point,
+and falls back to appending the idle-guard label as a plain output line if
+none exists.
 
 ## Requirements
 
