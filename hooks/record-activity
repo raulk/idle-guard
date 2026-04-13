@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Stop hook: record timestamp and token count for this session.
+set -euo pipefail
+
+INPUT=$(cat)
+
+# Prefer transcript_path (available to statusLine too); fall back to session_id.
+TRANSCRIPT_PATH=$(printf '%s' "$INPUT" | jq -r '.transcript_path // empty')
+SESSION_ID=$(printf '%s' "$INPUT" | jq -r '.session_id // empty')
+
+if [ -n "$TRANSCRIPT_PATH" ]; then
+    RAW_KEY="$TRANSCRIPT_PATH"
+elif [ -n "$SESSION_ID" ]; then
+    RAW_KEY="$SESSION_ID"
+else
+    printf '{"result": "continue"}\n'
+    exit 0
+fi
+
+# SHA-1 hash of the key — cross-platform (shasum on macOS, sha1sum on Linux).
+KEY=$(printf '%s' "$RAW_KEY" | shasum 2>/dev/null | cut -d' ' -f1 \
+    || printf '%s' "$RAW_KEY" | sha1sum | cut -d' ' -f1)
+
+# Sum all token count fields; any missing field counts as 0.
+TOKENS=$(printf '%s' "$INPUT" | jq '
+  ((.context_window.current_usage.input_tokens                  // 0) +
+   (.context_window.current_usage.cache_creation_input_tokens   // 0) +
+   (.context_window.current_usage.cache_read_input_tokens       // 0))
+')
+
+DATA_DIR="$HOME/.claude/plugins/data/idle-guard/sessions"
+mkdir -p "$DATA_DIR"
+
+# Epoch milliseconds — seconds precision is fine for 5-minute windows.
+TS=$(( $(date +%s) * 1000 ))
+
+if [ "${TOKENS:-0}" -gt 0 ] 2>/dev/null; then
+    printf '{"ts":%s,"tokens":%s}\n' "$TS" "$TOKENS" > "$DATA_DIR/$KEY.json"
+else
+    printf '{"ts":%s}\n' "$TS" > "$DATA_DIR/$KEY.json"
+fi
+
+printf '{"result": "continue"}\n'
