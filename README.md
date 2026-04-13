@@ -13,12 +13,12 @@ idle-guard tracks when Claude last responded. If you submit a new message after
 the cache has expired, it blocks the send and tells you:
 
 ```
-Session idle for 8m 14s (limit: 5m). The prompt cache has expired:
-resuming will trigger cache rewrites for ~45k tokens.
-Press up-arrow to send anyway, or start a new conversation.
+Session idle for 8m 14s (limit: 5m). The prompt cache has expired.
+Resuming will trigger cache rewrites for ~45k tokens.
+Press up-arrow to resend within the next 5m, or start a new conversation.
 ```
 
-Press up-arrow to resend your message if you want to proceed anyway.
+Press up-arrow to resend your message. You have one cache TTL window (default 5m) to do so before the block triggers again.
 
 ## Installation
 
